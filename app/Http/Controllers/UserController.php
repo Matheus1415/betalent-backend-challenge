@@ -36,4 +36,16 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+    public function show(int $id)
+    {
+        try {
+            $user = User::findOrFail($id);
+            return $this->success('Usuário encontrado com sucesso.', $user);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->error('Usuário não encontrado.', [], 404);
+        } catch (\Exception $e) {
+            return $this->error('Erro ao buscar usuário.', ['error' => $e->getMessage()], 500);
+        }
+    }
 }
