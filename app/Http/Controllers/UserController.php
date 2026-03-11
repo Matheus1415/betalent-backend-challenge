@@ -49,14 +49,28 @@ class UserController extends Controller
         }
     }
 
+    public function update(UpdateUserRequest $request, int $id)
+    {
+        try {
+            $user = User::findOrFail($id);
+
+            $updatedUser = $this->userService->update($user, $request->validated());
+
+            return $this->success('Usuário atualizado com sucesso.', $updatedUser);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->error('Usuário não encontrado para atualização.', [], 404);
+        } catch (\Exception $e) {
+            return $this->error('Erro ao atualizar usuário.', ['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function destroy(int $id)
     {
         try {
             $user = User::findOrFail($id);
 
-            if (auth()->id() === $user->id) {
-                return $this->error('Você não pode excluir sua própria conta.', [], 403);
-            }
+            $this->authorize('delete', $user);
 
             $user->delete();
 

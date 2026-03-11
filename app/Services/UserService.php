@@ -45,4 +45,16 @@ class UserService
             'role' => $data['role'] ?? 'USER',
         ]);
     }
+
+    public function update(User $user, array $data)
+    {
+        if (isset($data['password'])) {
+            $data['password'] = Hash::make($data['password']);
+        }
+
+        $user->fill($data);
+        $user->save();
+
+        return $user;
+    }
 }
