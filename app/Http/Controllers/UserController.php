@@ -48,4 +48,23 @@ class UserController extends Controller
             return $this->error('Erro ao buscar usuário.', ['error' => $e->getMessage()], 500);
         }
     }
+
+    public function destroy(int $id)
+    {
+        try {
+            $user = User::findOrFail($id);
+
+            if (auth()->id() === $user->id) {
+                return $this->error('Você não pode excluir sua própria conta.', [], 403);
+            }
+
+            $user->delete();
+
+            return $this->success('Usuário excluído com sucesso.', [], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->error('Usuário não encontrado para exclusão.', [], 404);
+        } catch (\Exception $e) {
+            return $this->error('Erro ao excluir usuário.', ['error' => $e->getMessage()], 500);
+        }
+    }
 }
