@@ -3,12 +3,22 @@
 namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Auth\Access\AuthorizationException;
+use App\Models\User;
+
 
 class IndexUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        $response = Gate::inspect('viewAny', User::class);
+
+        if ($response->allowed()) {
+            return true;
+        }
+
+        throw new AuthorizationException($response->message());
     }
 
     public function rules(): array

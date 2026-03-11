@@ -8,14 +8,18 @@ use Illuminate\Auth\Access\Response;
 class UserPolicy
 {
 
-    public function viewAny(User $authenticated): bool
+    public function viewAny(User $authenticated): Response
     {
-        return in_array($authenticated->role, ['ADMIN', 'MANAGER']);
+        return in_array($authenticated->role, ['ADMIN', 'MANAGER'])
+            ? Response::allow()
+            : Response::deny('Você não tem permissão para visualizar a lista de usuários.');
     }
 
-    public function create(User $authenticated): bool
+    public function create(User $user): Response
     {
-        return $authenticated->role === 'ADMIN';
+        return $user->role === 'ADMIN'
+            ? Response::allow()
+            : Response::deny('Apenas administradores podem cadastrar novos usuários.');
     }
 
     public function delete(User $authenticated, User $targetUser): Response

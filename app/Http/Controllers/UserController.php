@@ -39,6 +39,8 @@ class UserController extends Controller
 
     public function show(int $id)
     {
+        $this->authorize('viewAny', User::class);
+        
         try {
             $user = User::findOrFail($id);
             return $this->success('Usuário encontrado com sucesso.', $user);
