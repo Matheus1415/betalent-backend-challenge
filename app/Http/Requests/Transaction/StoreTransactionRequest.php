@@ -1,0 +1,51 @@
+<?php
+
+namespace App\Http\Requests\Transaction;
+
+use App\Models\Transaction;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Auth\Access\AuthorizationException;
+
+class StoreTransactionRequest extends FormRequest
+{
+
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'client_id'   => 'required|exists:clients,id',
+            'product_id'  => 'required|exists:products,id',
+            'gateway_id'  => 'required|exists:gateways,id',
+            
+            'card_number' => 'required|string|size:16',
+            'card_holder' => 'required|string|max:255',
+            'cvv'         => 'required|string|size:3',
+            'exp_month'   => 'required|integer|between:1,12',
+            'exp_year'    => 'required|integer|min:' . date('Y'),
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'client_id.required'   => 'Identificar o cliente é obrigatório.',
+            'client_id.exists'     => 'O cliente selecionado não existe em nossa base.',
+            'product_id.required'  => 'Um produto deve ser selecionado para a venda.',
+            'product_id.exists'    => 'O produto selecionado é inválido.',
+            'gateway_id.required'  => 'Escolha um gateway de pagamento (Gateway 1 ou 2).',
+            'gateway_id.exists'    => 'O gateway selecionado não está disponível.',
+            
+            'card_number.required' => 'O número do cartão é obrigatório.',
+            'card_number.size'     => 'O número do cartão deve conter exatamente 16 dígitos.',
+            'cvv.required'         => 'O código de segurança (CVV) é obrigatório.',
+            'cvv.size'             => 'O CVV deve ter 3 dígitos.',
+            'exp_month.between'    => 'O mês de expiração deve ser entre 01 e 12.',
+            'exp_year.min'         => 'O ano de expiração não pode ser no passado.',
+        ];
+    }
+}
