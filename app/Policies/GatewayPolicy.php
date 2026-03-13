@@ -26,7 +26,7 @@ class GatewayPolicy
             : Response::deny('Apenas administradores podem configurar novos gateways de pagamento.');
     }
 
-    public function update(User $user, Gateway $gateway): Response
+    public function update(User $user): Response
     {
         return $user->role === 'ADMIN'
             ? Response::allow()

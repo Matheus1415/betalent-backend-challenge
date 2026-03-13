@@ -2,6 +2,7 @@
 
 // Routes
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\GatewayController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthController;
@@ -25,4 +26,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('users', UserController::class);
     Route::apiResource('clients', ClientController::class);
     Route::apiResource('products', ProductController::class);
+    Route::apiResource('gateways', GatewayController::class);
 });
