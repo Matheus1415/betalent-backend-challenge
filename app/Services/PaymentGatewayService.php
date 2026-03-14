@@ -2,38 +2,32 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
+use App\DTOs\PaymentResponse;
+use App\Services\Gateways\GatewayOneDriver;
+use App\Services\Gateways\GatewayTwoDriver;
+use Exception;
 
 class PaymentGatewayService
 {
+    protected array $drivers = [
+        'gateway-1' => GatewayOneDriver::class,
+        'gateway-2' => GatewayTwoDriver::class,
+    ];
 
-    public function createTransactionOnGateway1(array $data)
+    public function process(string $slug, array $data, string $method = 'credit_card'): PaymentResponse
     {
-        $response = Http::withToken('FEC9BB078BF338F464F96B48089EB498')
-            ->post(config('services.gateway1.url') . '/transactions', [
-                'amount'     => $data['amount'] * 100,
-                'name'       => $data['name'],
-                'email'      => $data['email'],
-                'cardNumber' => $data['card_number'],
-                'cvv'        => $data['cvv'],
-            ]);
+        if (!isset($this->drivers[$slug])) {
+            throw new Exception("Gateway [{$slug}] não suportado.");
+        }
 
-        return $response->json();
-    }
+        $driverClass = $this->drivers[$slug];
+        $driver = new $driverClass();
 
-    public function createTransactionOnGateway2(array $data)
-    {
-        $response = Http::withHeaders([
-            'Gateway-Auth-Token' => 'tk_f2198cc671b5289fa856',
-            'Gateway-Auth-Secret' => '3d15e8ed6131446ea7e3456728b1211f'
-        ])->post(config('services.gateway2.url') . '/transacoes', [
-            'valor'        => $data['amount'],
-            'nome'         => $data['name'],
-            'email'        => $data['email'],
-            'numeroCartao' => $data['card_number'],
-            'cvv'          => $data['cvv'],
-        ]);
-
-        return $response->json();
+        return match ($method) {
+            'boleto'      => $driver->boleto($data),
+            'pix'         => $driver->pix($data),
+            'credit_card' => $driver->payCreditCard($data),
+            default       => throw new Exception("Método de pagamento [{$method}] não suportado."),
+        };
     }
 }

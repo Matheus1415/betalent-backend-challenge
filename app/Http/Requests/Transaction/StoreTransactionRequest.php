@@ -23,10 +23,7 @@ class StoreTransactionRequest extends FormRequest
             'gateway_id'  => 'required|exists:gateways,id',
             
             'card_number' => 'required|string|size:16',
-            'card_holder' => 'required|string|max:255',
             'cvv'         => 'required|string|size:3',
-            'exp_month'   => 'required|integer|between:1,12',
-            'exp_year'    => 'required|integer|min:' . date('Y'),
         ];
     }
 
@@ -44,8 +41,6 @@ class StoreTransactionRequest extends FormRequest
             'card_number.size'     => 'O número do cartão deve conter exatamente 16 dígitos.',
             'cvv.required'         => 'O código de segurança (CVV) é obrigatório.',
             'cvv.size'             => 'O CVV deve ter 3 dígitos.',
-            'exp_month.between'    => 'O mês de expiração deve ser entre 01 e 12.',
-            'exp_year.min'         => 'O ano de expiração não pode ser no passado.',
         ];
     }
 }

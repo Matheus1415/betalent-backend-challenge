@@ -30,10 +30,8 @@ class Transaction extends Model
         return $this->belongsTo(Gateway::class);
     }
 
-    public function products(): BelongsToMany
+    public function product(): BelongsTo
     {
-        return $this->belongsToMany(Product::class, 'transaction_products')
-                    ->withPivot('quantity', 'price_at_purchase')
-                    ->withTimestamps();
+        return $this->belongsTo(Product::class);
     }
 }

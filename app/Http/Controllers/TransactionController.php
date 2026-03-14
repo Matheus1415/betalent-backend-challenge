@@ -31,9 +31,20 @@ class TransactionController extends Controller
     public function store(StoreTransactionRequest $request)
     {
         try {
-            $transaction = $this->transactionService->processPayment($request->validated());
+            $serviceResponse = $this->transactionService->processPayment($request->validated());
 
-            return $this->success('Processamento de pagamento finalizado.', $transaction, 201);
+            if (!$serviceResponse['success']) {
+                return $this->error(
+                    $serviceResponse['message'],
+                    ['transaction' => $serviceResponse['transaction']],
+                    402,
+                );
+            }
+
+            return $this->success(
+                $serviceResponse['message'],
+                $serviceResponse['transaction']
+            );
 
         } catch (\Exception $e) {
             return $this->error('Falha ao processar transação.', [
