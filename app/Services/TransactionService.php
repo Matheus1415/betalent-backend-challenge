@@ -17,18 +17,25 @@ class TransactionService
 
     public function processPayment(array $data)
     {
-        $transaction = DB::transaction(function () use ($data) {
-            $product = Product::findOrFail($data['product_id']);
-            $gateway = Gateway::findOrFail($data['gateway_id']);
+        $product = Product::findOrFail($data['product_id']);
+        $quantity = $data['quantity'] ?? 1;
+        $totalAmount = $product->amount * $quantity;
 
-            return Transaction::create([
+        $transaction = DB::transaction(function () use ($data, $product, $quantity, $totalAmount) {
+            $transaction = Transaction::create([
                 'client_id' => $data['client_id'],
-                'product_id' => $product->id,
-                'gateway_id' => $gateway->id,
-                'amount' => $product->amount,
+                'gateway_id' => $data['gateway_id'],
+                'amount' => $totalAmount,
                 'status' => 'pending',
                 'card_last_numbers' => substr($data['card_number'], -4),
             ]);
+
+            $transaction->products()->attach($product->id, [
+                'quantity' => $quantity,
+                'price_at_purchase' => $product->amount
+            ]);
+
+            return $transaction;
         });
 
         try {
@@ -47,7 +54,7 @@ class TransactionService
 
             return [
                 'success' => $response->success,
-                'transaction' => $transaction->load(['client', 'product', 'gateway']),
+                'transaction' => $transaction->load(['client', 'products', 'gateway']),
                 'message' => $response->success ? 'Pagamento processado com sucesso.' : $response->status
             ];
 
@@ -63,7 +70,8 @@ class TransactionService
 
     public function getAll(array $filters = [], int $perPage = 10)
     {
-        $paginator = Transaction::with(['client', 'product', 'gateway'])
+        // Carregamos 'products' com os dados da tabela pivô (quantity, price_at_purchase)
+        $paginator = Transaction::with(['client', 'gateway', 'products'])
             ->when($filters['status'] ?? null, function ($query, $status) {
                 $query->where('status', $status);
             })
@@ -81,14 +89,34 @@ class TransactionService
             ->withQueryString();
 
         return [
-            'data' => $paginator->items(),
+            'data' => $paginator->getCollection()->map(function ($transaction) {
+                return [
+                    'id' => $transaction->id,
+                    'external_id' => $transaction->external_id,
+                    'status' => $transaction->status,
+                    'amount' => (float) $transaction->amount,
+                    'card_last_numbers' => $transaction->card_last_numbers,
+                    'date' => $transaction->created_at->format('d/m/Y H:i'),
+                    'client' => [
+                        'name' => $transaction->client->name,
+                        'email' => $transaction->client->email,
+                    ],
+                    'gateway' => $transaction->gateway->name,
+                    'items' => $transaction->products->map(function ($product) {
+                        return [
+                            'name' => $product->name,
+                            'qty' => $product->pivot->quantity,
+                            'price_unit' => (float) $product->pivot->price_at_purchase,
+                            'subtotal' => (float) ($product->pivot->quantity * $product->pivot->price_at_purchase)
+                        ];
+                    }),
+                ];
+            }),
             'pagination' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),
                 'per_page' => $paginator->perPage(),
                 'total' => $paginator->total(),
-                'from' => $paginator->firstItem(),
-                'to' => $paginator->lastItem(),
             ]
         ];
     }
