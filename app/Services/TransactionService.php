@@ -70,7 +70,6 @@ class TransactionService
 
     public function getAll(array $filters = [], int $perPage = 10)
     {
-        // Carregamos 'products' com os dados da tabela pivô (quantity, price_at_purchase)
         $paginator = Transaction::with(['client', 'gateway', 'products'])
             ->when($filters['status'] ?? null, function ($query, $status) {
                 $query->where('status', $status);

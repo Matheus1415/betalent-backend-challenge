@@ -55,14 +55,47 @@ class TransactionController extends Controller
 
     public function show(int $id)
     {
-
         try {
-            $transaction = Transaction::findOrFail($id);
-            return $this->success('Detalhes da transação carregados.', $transaction);
+            $transaction = Transaction::with(['client', 'gateway', 'products'])
+                ->findOrFail($id);
+
+            $formattedTransaction = [
+                'id' => $transaction->id,
+                'external_id' => $transaction->external_id,
+                'status' => $transaction->status,
+                'amount' => (float) $transaction->amount,
+                'card_last_numbers' => $transaction->card_last_numbers,
+                'created_at' => $transaction->created_at->format('d/m/Y H:i:s'),
+                'updated_at' => $transaction->updated_at->format('d/m/Y H:i:s'),
+
+                'client' => [
+                    'id' => $transaction->client->id,
+                    'name' => $transaction->client->name,
+                    'email' => $transaction->client->email,
+                ],
+
+                'gateway' => [
+                    'name' => $transaction->gateway->name,
+                    'slug' => $transaction->gateway->slug,
+                ],
+
+                'items' => $transaction->products->map(function ($product) {
+                    return [
+                        'product_id' => $product->id,
+                        'name' => $product->name,
+                        'qty' => $product->pivot->quantity,
+                        'price_unit' => (float) $product->pivot->price_at_purchase,
+                        'subtotal' => (float) ($product->pivot->quantity * $product->pivot->price_at_purchase)
+                    ];
+                }),
+            ];
+
+            return $this->success('Detalhes da transação carregados.', $formattedTransaction);
+
         } catch (ModelNotFoundException $e) {
-            return $this->error('Transação não encontrada.', [], 404);
+            return $this->error('Transação não encontrada.', 404);
         } catch (\Exception $e) {
-            return $this->error('Erro ao carregar detalhes da transação', [], 500);
+            return $this->error('Erro ao carregar detalhes da transação: ' . $e->getMessage(), 500);
         }
     }
 }
