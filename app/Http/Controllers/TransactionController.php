@@ -25,9 +25,6 @@ class TransactionController extends Controller
         }
     }
 
-    /** 
-     * Cria uma nova transação e processa o pagamento no Gateway.
-     */
     public function store(StoreTransactionRequest $request)
     {
         try {

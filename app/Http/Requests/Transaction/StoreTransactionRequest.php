@@ -20,7 +20,7 @@ class StoreTransactionRequest extends FormRequest
         return [
             'client_id'   => 'required|exists:clients,id',
             'product_id'  => 'required|exists:products,id',
-            'gateway_id'  => 'required|exists:gateways,id',
+            'gateway_id'  => 'sometimes|exists:gateways,id',
             
             'card_number' => 'required|string|size:16',
             'cvv'         => 'required|string|size:3',
@@ -34,7 +34,6 @@ class StoreTransactionRequest extends FormRequest
             'client_id.exists'     => 'O cliente selecionado não existe em nossa base.',
             'product_id.required'  => 'Um produto deve ser selecionado para a venda.',
             'product_id.exists'    => 'O produto selecionado é inválido.',
-            'gateway_id.required'  => 'Escolha um gateway de pagamento (Gateway 1 ou 2).',
             'gateway_id.exists'    => 'O gateway selecionado não está disponível.',
             
             'card_number.required' => 'O número do cartão é obrigatório.',
